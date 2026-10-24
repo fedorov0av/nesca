@@ -1,6 +1,7 @@
 #include "MainStarter.h"
 #include "cmath"
 #include "QDir"
+#include <openssl/opensslv.h>
 
 int gTimeOut = 3;
 int gMode;
@@ -951,25 +952,46 @@ void MainStarter::createResultFiles() {
     sprintf(fileName, "./" DIR_NAME "%s_%s", Utils::getStartDate().c_str(), Utils::getCurrentTarget().c_str());
     QDir myDir("");
     bool res = myDir.mkpath(fileName);
-    if (!res) {
-        int err = GetLastError();
-        if (err != 183)
-        {
-            while (!res) {
-                stt->doEmitionRedFoundData("Failed to create \"" + QString::fromLocal8Bit(fileName) + "\" Err: " + QString::number(err));
-                bool res = myDir.mkpath(fileName);
-                err = GetLastError();
-                Sleep(1000);
-            }
-        } else {
-            stt->doEmitionYellowFoundData("Directory \"" + QString::fromLocal8Bit(fileName) + "\" already exists. Err: " + QString::number(err));
-        }
-    } else {
+
+    if (res) {
         stt->doEmitionGreenFoundData("Result directory \"" + QString::fromLocal8Bit(fileName) + "\" successfully created.");
+        return;
     }
+
+#ifdef _WIN32
+    int err = GetLastError();
+    const int alreadyExists = 183; // ERROR_ALREADY_EXISTS
+#else
+    int err = errno;
+    const int alreadyExists = EEXIST;
+#endif
+
+    if (err == alreadyExists) {
+        stt->doEmitionYellowFoundData("Directory \"" + QString::fromLocal8Bit(fileName) + "\" already exists. Err: " + QString::number(err));
+        return;
+    }
+
+    for (int attempt = 0; attempt < 5; ++attempt) {
+        stt->doEmitionRedFoundData("Failed to create \"" + QString::fromLocal8Bit(fileName) + "\" Err: " + QString::number(err));
+        Sleep(1000);
+        res = myDir.mkpath(fileName);
+        if (res) {
+            stt->doEmitionGreenFoundData("Result directory \"" + QString::fromLocal8Bit(fileName) + "\" successfully created.");
+            return;
+        }
+#ifdef _WIN32
+        err = GetLastError();
+#else
+        err = errno;
+#endif
+    }
+
+    stt->doEmitionRedFoundData("Failed to create \"" + QString::fromLocal8Bit(fileName) +
+                               "\" after 5 attempts. Last error: " + QString::number(err));
 }
 
 /* This array will store all of the mutexes available to OpenSSL. */
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
 static MUTEX_TYPE *mutex_buf = NULL;
 
 static void locking_function(int mode, int n, const char * file, int line)
@@ -1012,6 +1034,18 @@ int thread_cleanup(void)
     mutex_buf = NULL;
     return 1;
 }
+#else
+/* OpenSSL >= 1.1.0 manages its own locks; the legacy callbacks were removed. */
+int thread_setup(void)
+{
+    return 1;
+}
+
+int thread_cleanup(void)
+{
+    return 1;
+}
+#endif
 
 void MainStarter::start(const char* targets, const char* ports) {
     std::srand(std::time(NULL));
