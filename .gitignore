@@ -59,3 +59,10 @@ nesca-run-*
 results_*
 restore
 version
+
+# Visual Studio
+.vs/
+Win32/
+x64/
+vcpkg_installed/
+*.user

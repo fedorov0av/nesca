@@ -1,0 +1,10 @@
+{
+  "name": "nesca",
+  "version-string": "3.2.0",
+  "description": "NESCA3 network scanner (Visual Studio dependencies)",
+  "dependencies": [
+    "libssh",
+    "curl",
+    "openssl"
+  ]
+}

@@ -76,8 +76,10 @@ make -j"$(nproc)"
 5. Скопируй рядом нужные DLL из `src/3rdparty` (см.
    [`docs/WINDOWS_DEPS.md`](docs/WINDOWS_DEPS.md)) и папку `src/pwd_lists`.
 
-VS2022-проект из `kazemYT/nesca` пока не портирован под `src/`-layout; это
-отдельный этап. Пока используй MinGW или Qt Creator.
+VS2022-проект (`nesca.sln` + `nesca.vcxproj`) подготовлен под `src/`-layout,
+но **не проверен** на Windows. Инструкция — в
+[`BUILD_VS.md`](BUILD_VS.md). Для проверенной сборки пока используй MinGW
+или Qt Creator.
 
 ## CLI
 
