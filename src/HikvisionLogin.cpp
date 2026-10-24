@@ -1,6 +1,7 @@
 #include "HikvisionLogin.h"
 #include "externData.h"
 #include "FileUpdater.h"
+#include "ResultSink.h"
 
 bool HikVis::isInitialized = false;
 int HikVis::hikCounter = 0;
@@ -378,7 +379,11 @@ lopaStr HikVis::hikLogin(const char * sDVRIP, int wDVRPort)
 				strcpy(lps.pass, pass);
 
 				rowIndex = Utils::addBARow(QString(ip) + ":" + QString::number(wDVRPort), QString(login) + ":" + QString(pass), "OK", rowIndex);
-				
+
+				ResultSink::finding(QString::fromLocal8Bit(ip), wDVRPort, QStringLiteral("hikvision"),
+				                    QStringLiteral("auth"), QString::fromLocal8Bit(login),
+				                    QString::fromLocal8Bit(pass));
+
 				return lps;
 			}
 
@@ -473,6 +478,10 @@ lopaStr HikVis::rviLogin(const char * sDVRIP, int wDVRPort)
 				strcpy(lps.pass, pass);
 
 				rowIndex = Utils::addBARow(QString(ip) + ":" + QString::number(wDVRPort), QString(login) + ":" + QString(pass), "OK", rowIndex);
+
+				ResultSink::finding(QString::fromLocal8Bit(ip), wDVRPort, QStringLiteral("rvi"),
+				                    QStringLiteral("auth"), QString::fromLocal8Bit(login),
+				                    QString::fromLocal8Bit(pass));
 
 				return lps;
 			}

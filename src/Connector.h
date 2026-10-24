@@ -31,6 +31,8 @@
 #endif
 
 
+bool portCheck(const char *ip, int port);
+
 class Connector {
 
 public:

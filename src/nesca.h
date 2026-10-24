@@ -24,6 +24,7 @@
 #include <QStandardItemModel>
 #include <QList>
 #include <ui_nesca.h>
+#include "HeadlessOptions.h"
 
 extern Ui::nesca_Class *ui;
 extern bool widgetIsHidden, QOSWait,
@@ -46,6 +47,7 @@ public:
 	~nesca();
 
 	void ConnectEvrthng();
+	void startHeadlessScan(const HeadlessOptions &opts);
 //	void ChangeLabelIpRange_Value(QString str);
 //	void ChangeLabelIPS_Value(QString str);
 //	void newListItem(QString str);

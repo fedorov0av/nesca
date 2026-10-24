@@ -20,15 +20,15 @@ IPRandomizer::~IPRandomizer()
 void IPRandomizer::shuffleRange() {
 	for (int i = 0; i < this->ipRangeVec.size(); ++i) {
 		IPRangeHolder ipRangeHolder = this->ipRangeVec[i];
-		if (ipRangeHolder.ip1 + this->shuffleOffset[i] >= ipRangeHolder.ip2) {
+		if (ipRangeHolder.ip1 + this->shuffleOffset[i] > ipRangeHolder.ip2) {
 			continue;
 		}
 
-		unsigned int rangeSize = ipRangeHolder.ip2 - (ipRangeHolder.ip1 + this->shuffleOffset[i] - 1);
-		int offset = (rangeSize < this->shuffleGap ? rangeSize : this->shuffleGap);
+		unsigned int remaining = ipRangeHolder.ip2 - (ipRangeHolder.ip1 + this->shuffleOffset[i]) + 1;
+		unsigned int offset = (remaining < static_cast<unsigned int>(this->shuffleGap) ? remaining : static_cast<unsigned int>(this->shuffleGap));
 
-		for (unsigned int j = this->shuffleOffset[i]; j < this->shuffleOffset[i] + offset; ++j) {
-			this->shuffledRange.push_back(ipRangeHolder.ip1 + j);
+		for (unsigned int j = 0; j < offset; ++j) {
+			this->shuffledRange.push_back(ipRangeHolder.ip1 + this->shuffleOffset[i] + j);
 		}
 
 		this->shuffleOffset[i] += offset;

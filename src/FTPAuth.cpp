@@ -1,5 +1,6 @@
 #include "FTPAuth.h"
 #include "FileUpdater.h"
+#include "ResultSink.h"
 
 bool FTPA::checkOutput(const string *buffer) {
     if(Utils::ustrstr(*buffer, "230") != -1) {
@@ -78,7 +79,11 @@ lopaStr FTPA::FTPBrute(const char *ip, const int port, PathStr *ps) {
 				strcpy(lps.pass, pass);
 
 				rowIndex = Utils::addBARow(QString(ip), QString(login) + ":" + QString(pass), "OK", rowIndex);
-				
+
+				ResultSink::finding(QString::fromLocal8Bit(ip), port, QStringLiteral("ftp"),
+				                    QStringLiteral("auth"), QString::fromLocal8Bit(login),
+				                    QString::fromLocal8Bit(pass));
+
 				return lps;
 			};
 

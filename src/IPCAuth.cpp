@@ -2,6 +2,7 @@
 #include "Utils.h"
 #include "BruteUtils.h"
 #include "FileUpdater.h"
+#include "ResultSink.h"
 
 #include <iomanip>
 #include <sstream>
@@ -309,6 +310,10 @@ Content-Length: %d\r\n\r\n\
 					strcpy(lps.pass, pass);
 
 					rowIndex = Utils::addBARow(QString(ip), QString(login) + ":" + QString(pass), "OK", rowIndex);
+
+					ResultSink::finding(QString::fromLocal8Bit(ip), port, QStringLiteral("ipc"),
+					                    QStringLiteral("auth"), QString::fromLocal8Bit(login),
+					                    QString::fromLocal8Bit(pass));
 
 					return lps;
 				}

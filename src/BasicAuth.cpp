@@ -1,4 +1,5 @@
 #include "BasicAuth.h"
+#include "ResultSink.h"
 
 int BA::checkOutput(const string *buffer, const char *ip, const int port) {
     if((Utils::ustrstr(*buffer, "200 ok") != -1 ||
@@ -8,7 +9,7 @@ int BA::checkOutput(const string *buffer, const char *ip, const int port) {
             && Utils::ustrstr(*buffer, "http/1.0 401 ") == -1
             && Utils::ustrstr(*buffer, "<statusValue>401</statusValue>") == -1
             && Utils::ustrstr(*buffer, "<statusString>Unauthorized</statusString>") == -1
-            && Utils::ustrstr(*buffer, "неправильны") == -1
+            && Utils::ustrstr(*buffer, "пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ") == -1
             && Utils::ustrstr(*buffer, "РќРµРїСЂР°РІРёР»СЊРЅС‹") == -1
             && Utils::ustrstr(*buffer, "code: \"401\"") == -1 //77.51.196.31:81
             ) {
@@ -199,6 +200,10 @@ lopaStr BA::BABrute(const char *ipOrig, const int port, bool performDoubleCheck)
                 }
                 if (res == 1) {
                     rowIndex = Utils::addBARow(QString(ip), QString(login) + ":" + QString(pass), "OK", rowIndex);
+
+                    ResultSink::finding(QString::fromLocal8Bit(ip), port, QStringLiteral("http-basic"),
+                                        QStringLiteral("auth"), QString::fromLocal8Bit(login),
+                                        QString::fromLocal8Bit(pass));
 
                     strcpy(lps.login, login);
                     strcpy(lps.pass, pass);

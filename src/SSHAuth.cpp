@@ -1,5 +1,6 @@
 #include "SSHAuth.h"
 #include "FileUpdater.h"
+#include "ResultSink.h"
 
 int _sshConnect(const char *user, const char *pass, const char *host, int port) {
 
@@ -13,7 +14,9 @@ int _sshConnect(const char *user, const char *pass, const char *host, int port) 
     if (curl)
     {
 		curl_easy_setopt(curl, CURLOPT_NOSIGNAL, 1L);
-        curl_easy_setopt(curl, CURLOPT_URL, host);
+        char urlStr[256] = {0};
+        snprintf(urlStr, sizeof(urlStr), "http://%s:%d", host, port);
+        curl_easy_setopt(curl, CURLOPT_URL, urlStr);
         curl_easy_setopt(curl, CURLOPT_PORT, port);
         curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
         curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L);
@@ -92,6 +95,10 @@ int check_ssh_pass(int rowIndex, const char *user, const char *pass,
     {
 		rowIndex = Utils::addBARow(QString(host), QString(userPass) + "@" + QString(host), "OK", rowIndex);
 
+        ResultSink::finding(QString::fromLocal8Bit(host), port, QStringLiteral("ssh"),
+                            QStringLiteral("auth"), QString::fromLocal8Bit(user),
+                            QString::fromLocal8Bit(pass), QString::fromLocal8Bit(banner));
+
         buffer->append(userPass);
         buffer->append("@");
         buffer->append(host);
@@ -135,11 +142,7 @@ int SSHBrute(const char* host, int port, std::string *buffer, const char *banner
 
         if(res == 0)
         {
-			if (i == 0) {
-				rowIndex = Utils::addBARow(QString(host) + ":" + QString::number(port), "--", "FAILHIT", rowIndex);
-				return -2; //Failhit
-			}
-            return 1;
+			return 1;
         }
         else if(res == -2)
 		{
@@ -160,20 +163,20 @@ int SSHAuth::SSHLobby(const char *ip, int port, std::string *buffer)
 
         while(BrutingThrds >= gMaxBrutingThreads) Sleep(1000);
 
-		std::string sshBanner;
-		Connector con;
-		con.nConnect(ip, port, &sshBanner);
+        if (!portCheck(ip, port)) return -1;
 
-        if (sshBanner[0] != '\0')
-        {
-			++BrutingThrds;
-			stt->doEmitionUpdateArc(gTargets);
-			int res = SSHBrute(ip, port, buffer, sshBanner.c_str());
-			--BrutingThrds;
-
-            return res;
+        if (MaxSSHPass <= 0) {
+            buffer->clear();
+            return 1;
         }
+
+        ++BrutingThrds;
+        stt->doEmitionUpdateArc(gTargets);
+        int res = SSHBrute(ip, port, buffer, "SSH");
+        --BrutingThrds;
+
+        return res;
     }
-	
+
 	return -1;
 }

@@ -35,7 +35,8 @@ SOURCES +=\
     IPRandomizer.cpp \
     HikvisionLogin.cpp \
     RTSP.cpp \
-    IPCAuth.cpp
+    IPCAuth.cpp \
+    ResultSink.cpp
 
 
 HEADERS  += \
@@ -69,7 +70,9 @@ HEADERS  += \
     IPRandomizer.h \
     HikvisionLogin.h \
     RTSP.h \
-    IPCAuth.h
+    IPCAuth.h \
+    ResultSink.h \
+    HeadlessOptions.h
 
 FORMS    += \
     nesca.ui

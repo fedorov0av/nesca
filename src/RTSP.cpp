@@ -1,4 +1,5 @@
 #include "RTSP.h"
+#include "ResultSink.h"
 
 int checkOutput(const string *buffer, const char *ip, const int port) {
 	if (Utils::ustrstr(buffer, "not found") != -1) {
@@ -28,6 +29,7 @@ lopaStr RTSP::RTSPBrute(const char *ip, const int port) {
 	if (2 == res) {
 		lps = (lopaStr){ "", "", "" };
 		rowIndex = Utils::addBARow(QString(ip), "Empty", "OK", rowIndex);
+		ResultSink::finding(QString::fromLocal8Bit(ip), port, QStringLiteral("rtsp"), QStringLiteral("open"));
 
 		return lps;
 	}
@@ -67,7 +69,11 @@ lopaStr RTSP::RTSPBrute(const char *ip, const int port) {
 				} else if (res == 1) {
 					rowIndex = Utils::addBARow(QString(ip), QString(login) + ":" + QString(pass), "OK", rowIndex);
 
-					strcpy(lps.login, pass);
+					ResultSink::finding(QString::fromLocal8Bit(ip), port, QStringLiteral("rtsp"),
+					                    QStringLiteral("auth"), QString::fromLocal8Bit(login),
+					                    QString::fromLocal8Bit(pass));
+
+					strcpy(lps.login, login);
 					strcpy(lps.pass, pass);
 					return lps;
 				};

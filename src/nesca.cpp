@@ -2773,6 +2773,44 @@ void nesca::ImportScanSeq()
 	else stt->doEmitionYellowFoundData("Empty filename.");
 }
 
+void nesca::startHeadlessScan(const HeadlessOptions &opts)
+{
+    ui->shuffle_onoff->setChecked(opts.shuffle);
+    ui->iptoLine_value->setText(QString::number(opts.timeout));
+    ui->iptoLine_value_2->setText(QString::number(opts.timeout));
+    ui->iptoLine_value_3->setText(QString::number(opts.timeout));
+    ui->threadDelayBox->setText(QString::number(opts.delay));
+    ui->maxBrutingThrBox->setText(QString::number(opts.bruteThreads));
+
+    gThreads = opts.threads;
+    gTimeOut = opts.timeout;
+    Threader::gThreadDelay = opts.delay;
+    gMaxBrutingThreads = opts.bruteThreads;
+
+    if (opts.mode == QStringLiteral("dns")) {
+        nesca::savedTabIndex = 1;
+        ui->tabMainWidget->setCurrentIndex(1);
+        ui->dnsLine->setText(opts.target);
+        ui->dnsPortLine->setText(opts.ports);
+        ui->lineEditThread->setText(QString::number(opts.threads));
+        DNSScanSeq();
+    } else if (opts.mode == QStringLiteral("import")) {
+        nesca::savedTabIndex = 2;
+        ui->tabMainWidget->setCurrentIndex(2);
+        importFileName = opts.targetFile;
+        ui->importPortLine->setText(opts.ports);
+        ui->importThreads->setText(QString::number(opts.threads));
+        ImportScanSeq();
+    } else {
+        nesca::savedTabIndex = 0;
+        ui->tabMainWidget->setCurrentIndex(0);
+        ui->ipLine->setText(opts.target);
+        ui->ipmPortLine->setText(opts.ports);
+        ui->threadLine->setText(QString::number(opts.threads));
+        IPScanSeq();
+    }
+}
+
 void nesca::logoLabelClicked()
 {
 	QDesktopServices::openUrl(QUrl("http://nesca.d3w.org/"));

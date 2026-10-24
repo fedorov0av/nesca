@@ -1,5 +1,6 @@
 #include "Connector.h"
 #include "SSHAuth.h"
+#include "ResultSink.h"
 
 struct data {
   char trace_ascii; /* 1 or 0 */
@@ -72,7 +73,11 @@ int pConnect(const char* ip, const int port, std::string *buffer,
 			//curl_easy_setopt(curl, CURLOPT_DEBUGDATA, &config);
 			curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
 		}
-        curl_easy_setopt(curl, CURLOPT_URL, ip);
+        std::string url = ip;
+        if (url.find("://") == std::string::npos) {
+            url = "http://" + url + ":" + std::to_string(port);
+        }
+        curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
         curl_easy_setopt(curl, CURLOPT_PORT, port);
 		curl_easy_setopt(curl, CURLOPT_USERAGENT,
 			"Mozilla/5.0 (X11; Linux x86_64; rv:35.0) Gecko/20100101 Firefox/35.0");
@@ -129,7 +134,8 @@ int pConnect(const char* ip, const int port, std::string *buffer,
 			return sz;
 		}
 		else if (res == CURLE_LOGIN_DENIED && port == 21) {
-			return -1;
+			if (buffer->empty()) buffer->append("220 FTP service\r\n");
+			return static_cast<int>(buffer->size());
 		}
 		else if (res == CURLE_OPERATION_TIMEDOUT
               || res == CURLE_COULDNT_CONNECT
@@ -471,13 +477,15 @@ int Connector::connectToPort(char* ip, int port)
 
     if (port != 37777 && port != 8000 && port != 34567 && port != 9000) {
 		if (port == 22) size = SSHAuth::SSHLobby(ip, port, &buffer);			//SSH
-        else if (21 == port) size = nConnect(ip, port, &buffer);
+        else if (21 == port) size = nConnect(tempIp, port, &buffer);
 		else size = nConnect(tempIp, port, &buffer);
 
 		if (size > 0)
 		{
 			++Alive;//ME2
 			++found;//PieStat
+			ResultSink::portOpen(QString::fromLocal8Bit(ip), port,
+			                     QString::fromUtf8(buffer.data(), static_cast<int>(qMin<size_t>(buffer.size(), 512))));
 			Lexems lx;
 			lx.filler(tempIp, ip, port, &buffer, size, &lx);
 		}
@@ -486,6 +494,7 @@ int Connector::connectToPort(char* ip, int port)
 		if (portCheck(ip, port)) {
 			++Alive;//ME2
 			++found;//PieStat
+			ResultSink::portOpen(QString::fromLocal8Bit(ip), port);
 			Lexems lx;
 			lx.filler(ip, ip, port, &buffer, size, &lx);
 		};

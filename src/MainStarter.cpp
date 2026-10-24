@@ -45,190 +45,116 @@ void MainStarter::unBlockButtons(){
     stt->doEmitionBlockButton(false);
 }
 int MainStarter::fileLoader(const char *fileName) {
+    FILE *fl = fopen(fileName, "r");
+    if (fl == NULL) {
+        stt->doEmitionRedFoundData("[IP Loader] Cannot open IP list.");
+        return -1;
+    }
 
     unsigned int importFileSize = 0;
-
-    FILE *fl = fopen(fileName, "r");
-    if (fl != NULL)
-    {
-        char curIP[256] = { 0 };
-        while (fgets((char*)curIP, sizeof(curIP), fl) != NULL)
-        {
-            if (curIP[0] != '#' && curIP[0] != ' ' && curIP[0] != '\n' && curIP[0] != '\r' && strcmp(curIP, "") != 0 &&
-                    ((curIP[0] == '/' && curIP[1] == '/') == false) && ((curIP[0] == '\t' && curIP[1] == '\t' && curIP[2] == '\t' && (curIP[3] == 13 || curIP[3] == 10 || curIP[3] == '#')) == false)
-                    && (curIP[0] == '\t' && curIP[1] == '\t' && curIP[2] == '\t' && (curIP[3] == '/' && curIP[4] == '/')) == false
-                    ) ++importFileSize;
-            curIP[0] = 0;
-            //ZeroMemory(curIP, sizeof(curIP));
-        };
-        fclose(fl);
+    char line[256];
+    while (fgets(line, sizeof(line), fl) != NULL) {
+        char *p = line;
+        while (*p == ' ' || *p == '\t') ++p;
+        if (*p == '\0' || *p == '\n' || *p == '\r' || *p == '#') continue;
+        if (p[0] == '/' && p[1] == '/') continue;
+        ++importFileSize;
     }
-    else stt->doEmitionRedFoundData("[IP Loader] Cannot open IP list.");
+    if (importFileSize == 0) {
+        fclose(fl);
+        return -1;
+    }
 
-    if (importFileSize == 0) return -1;
-
-    ipsstartfl = new unsigned int*[importFileSize + 1];
-    ipsendfl = new unsigned int*[importFileSize + 1];
-    //ipsstartfl[0] = 0;
-    //ipsendfl[0] = 0;
-    /*ZeroMemory(ipsstartfl, sizeof(ipsstartfl));
-    ZeroMemory(ipsendfl, sizeof(ipsendfl));*/
-
-    for (int i = 0; i < importFileSize; ++i)
-    {
+    rewind(fl);
+    ipsstartfl = new unsigned int*[importFileSize];
+    ipsendfl = new unsigned int*[importFileSize];
+    for (unsigned int i = 0; i < importFileSize; ++i) {
         ipsstartfl[i] = new unsigned int[4];
         ipsendfl[i] = new unsigned int[4];
-
-        //ZeroMemory(ipsstartfl[i], sizeof(ipsstartfl[i]));
-        //ZeroMemory(ipsendfl[i], sizeof(ipsendfl[i]));
-        //ipsstartfl[i] = 0;
-        //ipsendfl[i] = 0;
-    };
-
-    std::vector<std::string> shuffleArray;
-    ifstream inputStream(fileName);
-    std::string curIPStr;
-
-    while (!inputStream.eof())
-    {
-        std::getline(inputStream, curIPStr);
-        if (curIPStr.size() > 1
-                && curIPStr.find('#') == std::string::npos) shuffleArray.push_back(curIPStr);
     }
 
-    std::random_shuffle(shuffleArray.begin(), shuffleArray.end());
-    for (int i = 0; i < importFileSize; ++i) {
-        curIPStr = shuffleArray[i];
-        if (curIPStr.find('-') != std::string::npos) {
-            std::vector<std::string> tmpIPVec = Utils::splitToStrVector(curIPStr, '-');
-            std::vector<int> tmpIPIntVec1 = Utils::splitToIntVector(tmpIPVec[0], '.');
-            std::vector<int> tmpIPIntVec2 = Utils::splitToIntVector(tmpIPVec[1], '.');
-
-            ipsstartfl[MainStarter::flCounter][0] = tmpIPIntVec1[0];
-            ipsstartfl[MainStarter::flCounter][1] = tmpIPIntVec1[1];
-            ipsstartfl[MainStarter::flCounter][2] = tmpIPIntVec1[2];
-            ipsstartfl[MainStarter::flCounter][3] = tmpIPIntVec1[3];
-
-            ipsendfl[MainStarter::flCounter][0] = tmpIPIntVec2[0];
-            ipsendfl[MainStarter::flCounter][1] = tmpIPIntVec2[1];
-            ipsendfl[MainStarter::flCounter][2] = tmpIPIntVec2[2];
-            ipsendfl[MainStarter::flCounter][3] = tmpIPIntVec2[3];
-
-            if (ipsstartfl[MainStarter::flCounter][0] > ipsendfl[MainStarter::flCounter][0]
-                    || (ipsstartfl[MainStarter::flCounter][0] >= ipsendfl[MainStarter::flCounter][0]
-                        && ipsstartfl[MainStarter::flCounter][1] > ipsendfl[MainStarter::flCounter][1]
-                        )
-                    || (ipsstartfl[MainStarter::flCounter][0] >= ipsendfl[MainStarter::flCounter][0]
-                        && ipsstartfl[MainStarter::flCounter][1] >= ipsendfl[MainStarter::flCounter][1]
-                        && ipsstartfl[MainStarter::flCounter][2] > ipsendfl[MainStarter::flCounter][2]
-                        )
-                    || (ipsstartfl[MainStarter::flCounter][0] >= ipsendfl[MainStarter::flCounter][0]
-                        && ipsstartfl[MainStarter::flCounter][1] >= ipsendfl[MainStarter::flCounter][1]
-                        && ipsstartfl[MainStarter::flCounter][2] >= ipsendfl[MainStarter::flCounter][2]
-                        && ipsstartfl[MainStarter::flCounter][3] > ipsendfl[MainStarter::flCounter][3]
-                        )
-                    )
-            {
-                stt->doEmitionRedFoundData(" [IP Loader]Wrong list format. String-> [" +
-                                           QString(curIPStr.c_str()) + "]");
-                return -1;
-            };
-
-            unsigned long ip1 = (ipsstartfl[MainStarter::flCounter][0] * 16777216) +
-                    (ipsstartfl[MainStarter::flCounter][1] * 65536) +
-                    (ipsstartfl[MainStarter::flCounter][2] * 256) +
-                    ipsstartfl[MainStarter::flCounter][3];
-            unsigned long ip2 = (ipsendfl[MainStarter::flCounter][0] * 16777216) +
-                    (ipsendfl[MainStarter::flCounter][1] * 65536) +
-                    (ipsendfl[MainStarter::flCounter][2] * 256) +
-                    ipsendfl[MainStarter::flCounter][3];
-
-            if (ip1 > ip2) {
-                stt->doEmitionRedFoundData(" Malformed input: check your range (" +
-                                           QString(curIPStr.c_str()) + ")");
-            }
-
-            gTargets += ip2 - ip1 + 1;
-            ++MainStarter::flCounter;
+    gTargets = 0;
+    while (fgets(line, sizeof(line), fl) != NULL) {
+        size_t len = strlen(line);
+        while (len > 0 && (line[len - 1] == '\n' || line[len - 1] == '\r')) {
+            line[--len] = '\0';
         }
-        else if (curIPStr.find('/') != std::string::npos)
-        {
-            if (curIPStr.size() > 18) {
-                stt->doEmitionRedFoundData(" [IP Loader]Wrong list format. String-> [" +
-                                           QString(curIPStr.c_str()) +
-                                           "]");
+
+        char *p = line;
+        while (*p == ' ' || *p == '\t') ++p;
+        if (*p == '\0' || *p == '#' || (p[0] == '/' && p[1] == '/')) continue;
+        if (strstr(p, "RESTORE_IMPORT_SESSION") != NULL) continue;
+
+        unsigned int a[4] = {0}, b[4] = {0};
+        if (strchr(p, '-') != NULL) {
+            if (sscanf(p, "%u.%u.%u.%u-%u.%u.%u.%u",
+                       &a[0], &a[1], &a[2], &a[3], &b[0], &b[1], &b[2], &b[3]) != 8) {
+                stt->doEmitionRedFoundData("[IP Loader]Wrong list format. String-> [" +
+                                           QString::fromLocal8Bit(p) + "]");
                 continue;
             }
-            unsigned int ip[4] = { 0 }, ip_min[4] = { 0 }, ip_max[4] = { 0 }, tmp1, tmp2;
-            unsigned int netmask = atoi(strchr(curIPStr.c_str(), '/') + 1);
-
-            std::vector<int> tmpIPVec = Utils::splitToIntVector(curIPStr, '.');
-
-            for (int i = 0; i < tmpIPVec.size(); ++i) ip[i] = tmpIPVec[i];
-
-            /*Set the bytes which won't be changed*/
-            for (tmp1 = tmp2 = netmask / 8; tmp1>0; tmp1--){
-                ip_min[tmp1 - 1] = ip[tmp1 - 1];
-                ip_max[tmp1 - 1] = ip[tmp1 - 1];
+        } else if (strchr(p, '/') != NULL) {
+            unsigned int mask = 0;
+            if (sscanf(p, "%u.%u.%u.%u/%u", &a[0], &a[1], &a[2], &a[3], &mask) != 5 || mask > 32) {
+                stt->doEmitionRedFoundData("[IP Loader]Wrong list format. String-> [" +
+                                           QString::fromLocal8Bit(p) + "]");
+                continue;
             }
-            /*Set the bytes which should be 0ed or 255ed.*/
-            for (tmp1 = tmp2, ++tmp2; tmp2 < 4; tmp2++){
-                ip_min[tmp2] = 0;
-                ip_max[tmp2] = 255;
-            }
-            /* Finally set the one which has to be shifted.*/
-            if (tmp1 < 4){
-                tmp2 = 8 - netmask % 8;
-                ip_min[tmp1] = ip[tmp1] >> tmp2;
-                ip_min[tmp1] <<= tmp2;
-                ip_max[tmp1] = ip_min[tmp1] + pow(2, tmp2) - 1;
-            }
-
-            ipsstartfl[MainStarter::flCounter][0] = ip_min[0];
-            ipsstartfl[MainStarter::flCounter][1] = ip_min[1];
-            ipsstartfl[MainStarter::flCounter][2] = ip_min[2];
-            ipsstartfl[MainStarter::flCounter][3] = ip_min[3];
-
-            ipsendfl[MainStarter::flCounter][0] = ip_max[0];
-            ipsendfl[MainStarter::flCounter][1] = ip_max[1];
-            ipsendfl[MainStarter::flCounter][2] = ip_max[2];
-            ipsendfl[MainStarter::flCounter][3] = ip_max[3];
-
-            unsigned long ip1 = (ip_min[0] * 16777216) +
-                    (ip_min[1] * 65536) +
-                    (ip_min[2] * 256) +
-                    ip_min[3];
-            unsigned long ip2 = (ip_max[0] * 16777216) +
-                    (ip_max[1] * 65536) +
-                    (ip_max[2] * 256) +
-                    ip_max[3];
-
-            if (ip1 > ip2) {
-                stt->doEmitionRedFoundData("Malformed input: check your range (" +
-                                           QString(curIPStr.c_str()) + ")");
-            }
-
-            gTargets += ip2 - ip1 + 1;
-            ++MainStarter::flCounter;
+            const unsigned long long ip = (static_cast<unsigned long long>(a[0]) << 24)
+                    | (static_cast<unsigned long long>(a[1]) << 16)
+                    | (static_cast<unsigned long long>(a[2]) << 8)
+                    | a[3];
+            const unsigned long long netmask = (mask == 0)
+                    ? 0ULL
+                    : (0xFFFFFFFFULL << (32 - mask)) & 0xFFFFFFFFULL;
+            const unsigned long long minIp = ip & netmask;
+            const unsigned long long maxIp = minIp | (~netmask & 0xFFFFFFFFULL);
+            a[0] = static_cast<unsigned int>(minIp >> 24);
+            a[1] = static_cast<unsigned int>((minIp >> 16) & 0xFF);
+            a[2] = static_cast<unsigned int>((minIp >> 8) & 0xFF);
+            a[3] = static_cast<unsigned int>(minIp & 0xFF);
+            b[0] = static_cast<unsigned int>(maxIp >> 24);
+            b[1] = static_cast<unsigned int>((maxIp >> 16) & 0xFF);
+            b[2] = static_cast<unsigned int>((maxIp >> 8) & 0xFF);
+            b[3] = static_cast<unsigned int>(maxIp & 0xFF);
+        } else {
+            stt->doEmitionRedFoundData("[IP Loader]Wrong list format. String-> [" +
+                                       QString::fromLocal8Bit(p) + "]");
+            continue;
         }
-        else if (strstr(curIPStr.c_str(), "RESTORE_IMPORT_SESSION") != NULL)
-        {
-            ///DUMMY///
+
+        const unsigned long long ip1 = (static_cast<unsigned long long>(a[0]) << 24)
+                | (static_cast<unsigned long long>(a[1]) << 16)
+                | (static_cast<unsigned long long>(a[2]) << 8)
+                | a[3];
+        const unsigned long long ip2 = (static_cast<unsigned long long>(b[0]) << 24)
+                | (static_cast<unsigned long long>(b[1]) << 16)
+                | (static_cast<unsigned long long>(b[2]) << 8)
+                | b[3];
+        if (ip1 > ip2) {
+            stt->doEmitionRedFoundData("Malformed input: check your range (" +
+                                       QString::fromLocal8Bit(p) + ")");
+            continue;
         }
-        else
-        {
-            stt->doEmitionRedFoundData("[IP Loader]Wrong list format. Line-> [" +
-                                       QString::number(MainStarter::flCounter) +
-                                       "] String-> [" +
-                                       QString(curIPStr.c_str()) +
-                                       "]");
-            return -1;
-        };
-    };
+
+        const unsigned int row = MainStarter::flCounter;
+        if (row >= importFileSize) break;
+        for (int k = 0; k < 4; ++k) {
+            ipsstartfl[row][k] = a[k];
+            ipsendfl[row][k] = b[k];
+        }
+        gTargets += ip2 - ip1 + 1;
+        ++MainStarter::flCounter;
+    }
+    fclose(fl);
+
+    if (MainStarter::flCounter == 0) return -1;
     gTargetsNumber = gTargets;
-    stt->doEmitionYellowFoundData("List loader - [OK] (" + QString::number(gTargetsNumber + 1) + " hosts)");
-
+    stt->doEmitionYellowFoundData("List loader - [OK] (" +
+                                  QString::number(gTargetsNumber) + " hosts)");
+    return 0;
 }
+
 int MainStarter::loadTargets(const char *data) {
 
     if (gMode == 0) {
@@ -1082,6 +1008,10 @@ void MainStarter::start(const char* targets, const char* ports) {
 
     stt->doEmitionYellowFoundData("Stopping threads...");
 
+    // Give freshly spawned workers a chance to enter the queue before we
+    // decide that nothing is running. Without this, a single-target scan can
+    // finish before the worker increments `cons`.
+    Sleep(1000);
     while (cons > 0 || jsonArr->size() > 0) Sleep(2000);
     MainStarter::saveBK();
     saveBackup = false;

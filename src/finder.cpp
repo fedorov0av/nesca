@@ -518,8 +518,6 @@ std::string __checkFileOrCreate(int flag)
         return fileName;
     }
 	else {
-		fclose(f);
-
         FILE *file = fopen(fileName.c_str(), "a");
 
         // Header
@@ -2947,6 +2945,7 @@ int Lexems::filler(char* ip, char *ipRaw, int port, std::string *buffcpy, int si
 	}
 	else {
 		if (port == 22) {
+			if (buffcpy->empty()) return -1;
 			_saveSSH(ip, 22, size, buffcpy->c_str());
 			return -1;
 		}
