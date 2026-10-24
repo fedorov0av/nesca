@@ -1088,8 +1088,8 @@ void nesca::slotUpdatePie()
 	float perc5 = 0;
 	float perc6 = ((float)PieSSH/(float)(found) * 100) * degree;
 
-	QString dataSaved = "Saved:\t"	+ QString::number(goods/(float)(found > 0 ? found : 1) * 100) + "%(" + QString::number(goods) + ")";
-	QString dataParsed = "Filtered:\t"	+ QString::number((found - goods)/(float)(found > 0 ? found : 1) * 100) + "%(" + QString::number(found - goods) + ")";
+	QString dataSaved = "Saved:\t"	+ QString::number(goods/(float)(found.load() > 0 ? found.load() : 1) * 100) + "%(" + QString::number(goods) + ")";
+	QString dataParsed = "Filtered:\t"	+ QString::number((found.load() - goods)/(float)(found.load() > 0 ? found.load() : 1) * 100) + "%(" + QString::number(found.load() - goods) + ")";
 	QString dataOnline = "Online:\t"	+ QString::number(found);
 	QString dataAnom = "Cameras:\t"	+ QString::number(PieCamerasC1 / (float)(goods > 0 ? goods : 1) * 100) + "%";
 	QString dataBA = "Auth:\t"	+ QString::number(PieBA/(float)(goods > 0 ? goods : 1) * 100) + "%";

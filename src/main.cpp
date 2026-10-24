@@ -239,6 +239,13 @@ int runHeadless(QApplication &app, HeadlessOptions &opts)
     }
 
     const int rc = app.exec();
+
+    if (timedOut) {
+        globalScanFlag = false;
+        Threader::cleanUp();
+    }
+    if (stt->isRunning()) stt->wait(10000);
+
     ResultSink::summary(timedOut ? 1 : rc, timedOut);
     ResultSink::shutdown();
     return timedOut ? 1 : rc;

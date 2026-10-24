@@ -17,6 +17,8 @@
 - Docker-сборка на Ubuntu 24.04 с Qt 5.15 и системными libssh/curl/openssl.
 - Исправления Linux-сборки: OpenSSL 3, импорт списков целей, обнаружение
   SSH/FTP без брута, последний IP в диапазоне, гонка запуска воркеров.
+- Фиксированный thread pool и атомарные счётчики вместо потока на каждый IP;
+  бенчмарк — в [`docs/BENCHMARK.md`](docs/BENCHMARK.md).
 - Изолированный Docker-полигон для проверки HTTP Basic, SSH, FTP и RTSP.
 - Legacy Windows DLL вынесены из git; `HCNetSDK.dll` не распространяется.
 

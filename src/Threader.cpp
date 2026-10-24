@@ -1,36 +1,68 @@
 #include "Threader.h"
 
 int Threader::gThreadDelay = 10;
-int Threader::threadId = 0;
+std::atomic<int> Threader::activeThreads(0);
 std::mutex Threader::m;
-bool Threader::ready = false;
+std::mutex Threader::cleanupMutex;
+bool Threader::stop = false;
 std::condition_variable Threader::cv;
-std::queue<std::string> Threader::ipQueue;
+std::queue<std::pair<std::string, std::function<void(std::string)>>> Threader::taskQueue;
+std::vector<std::thread> Threader::workers;
 
-void Threader::fireThread(std::string ip, void *func(void)) {
+void Threader::worker()
+{
+    while (true) {
+        std::pair<std::string, std::function<void(std::string)>> task;
+        {
+            std::unique_lock<std::mutex> lock(m);
+            cv.wait(lock, [] { return stop || !taskQueue.empty(); });
+            if (stop && taskQueue.empty()) return;
+            task = std::move(taskQueue.front());
+            taskQueue.pop();
+        }
 
-    ipQueue.push(ip);
-
-    if(threadId < gThreads) {
-        ++threadId;
-        std::thread workerThread(func);
-        workerThread.detach();
+        ++activeThreads;
+        task.second(task.first);
+        --activeThreads;
     }
+}
 
-	ready = true;
-	cv.notify_one();
+void Threader::fireThread(std::string ip, void (*func)(std::string))
+{
+    {
+        std::lock_guard<std::mutex> lock(m);
+        if (workers.empty()) {
+            stop = false;
+            int numThreads = gThreads;
+            if (numThreads <= 0) numThreads = 1;
+            for (int i = 0; i < numThreads; ++i) {
+                workers.emplace_back(worker);
+            }
+        }
+        taskQueue.push(std::make_pair(std::move(ip), func));
+    }
+    cv.notify_one();
     Sleep(gThreadDelay);
 }
 
-void Threader::cleanUp() {
-	ready = true;
-	cv.notify_all();
-	std::unique_lock<std::mutex> lk(m);
-	lk.unlock();
-	lk.release();
-	Sleep(200);
-    threadId = 0;
-    std::queue<std::string> empty;
-	std::swap(ipQueue, empty);
-	ready = false;
+void Threader::cleanUp()
+{
+    std::lock_guard<std::mutex> cleanupLock(cleanupMutex);
+    {
+        std::lock_guard<std::mutex> lock(m);
+        if (workers.empty()) {
+            stop = false;
+            return;
+        }
+        stop = true;
+        std::queue<std::pair<std::string, std::function<void(std::string)>>> empty;
+        std::swap(taskQueue, empty);
+    }
+    cv.notify_all();
+    for (auto &w : workers) {
+        if (w.joinable()) w.join();
+    }
+    workers.clear();
+    activeThreads = 0;
+    stop = false;
 }

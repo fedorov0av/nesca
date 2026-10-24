@@ -5,14 +5,15 @@
 
 int gTimeOut = 3;
 int gMode;
-int PieCamerasC1 = 0, PieBA = 0, PieOther = 0, PieSSH = 0;
-int camerasC1 = 0, filtered = 0, Overl = 0, Alive = 0, saved = 0, other = 0, ssh = 0;
-int found = 0, indexIP = 0;
+std::atomic<int> PieCamerasC1(0), PieBA(0), PieOther(0), PieSSH(0);
+std::atomic<int> camerasC1(0), filtered(0), Overl(0), Alive(0), saved(0), other(0), ssh(0);
+std::atomic<int> found(0), indexIP(0);
 int MaxPass = 0, MaxLogin = 0,
 MaxWFLogin = 0, MaxWFPass = 0,
 MaxFTPLogin = 0, MaxFTPPass = 0,
 MaxSSHPass = 0;
-int baCount = 0;
+std::atomic<int> baCount(0);
+std::atomic<int> cIndex(0);
 int gMaxBrutingThreads = 50;
 unsigned int Activity = 0;
 char gTLD[128] = { 0 };
@@ -29,7 +30,7 @@ volatile bool MainStarter::savingBackUpFile = false;
 QJsonArray *jsonArr = new QJsonArray();
 bool horLineFlag = false;
 bool gShuffle = true;
-int ipCounter = 0;
+std::atomic<int> ipCounter(0);
 long long unsigned gTargets = 0, gTargetsNumber = 1;
 char currentMask[128]	= { 0 };
 char metaRange[256]		= { 0 };
@@ -425,43 +426,20 @@ void verboseProgress(unsigned long target) {
             percent);
 }
 
-void _connect() {
+void _connect(std::string ip) {
+    if (!globalScanFlag) return;
 
-    std::string ip = "";
-    std::unique_lock<std::mutex> lk;
-    while (globalScanFlag) {
-        lk = std::unique_lock<std::mutex>(Threader::m);
-        Threader::cv.wait(lk, []{return Threader::ready; });
+    ++ipCounter;
 
-        if (!globalScanFlag || Threader::threadId > gThreads) {
-            --Threader::threadId;
-            lk.unlock();
-            Threader::ready = true;
-            Threader::cv.notify_all();
-            return;
-        }
-
-        Threader::ready = false;
-
-        if (!Threader::ipQueue.empty()) {
-            ip = Threader::ipQueue.front();
-            Threader::ipQueue.pop();
-            lk.unlock();
-
-            ++ipCounter;
-
-            ++cons;
-            Connector con;
-            for (int i = 0; i < MainStarter::portVector.size(); ++i)
-            {
-                if (!globalScanFlag) break;
-                if (con.connectToPort((char*)ip.c_str(), MainStarter::portVector[i]) == -2) break;
-            };
-            --cons;
-            stt->doEmitionUpdateArc(gTargets);
-        }
-        else lk.unlock();
-    }
+    ++cons;
+    Connector con;
+    for (int i = 0; i < MainStarter::portVector.size(); ++i)
+    {
+        if (!globalScanFlag) break;
+        if (con.connectToPort((char*)ip.c_str(), MainStarter::portVector[i]) == -2) break;
+    };
+    --cons;
+    stt->doEmitionUpdateArc(gTargets);
 }
 
 void MainStarter::startIPScan(){
@@ -483,7 +461,7 @@ void MainStarter::startIPScan(){
             ipVec.erase(ipVec.begin());
             verboseProgress(gTargets);
 
-            Threader::fireThread(currentIP, (void*(*)(void))_connect);
+            Threader::fireThread(currentIP, _connect);
         }
         else {
             if (offset < 1000) {
@@ -532,7 +510,7 @@ void MainStarter::startIPScan(){
                     ipVec.erase(ipVec.begin());
                     verboseProgress(gTargets);
 
-                    Threader::fireThread(currentIP, (void*(*)(void))_connect);
+                    Threader::fireThread(currentIP, _connect);
                 }
             }
         }
@@ -552,7 +530,7 @@ haters_gonna_hate_IPM:;
             strcpy(currentIP, inet_ntoa(tAddr));
             verboseProgress(gTargets);
 
-            Threader::fireThread(currentIP, (void*(*)(void))_connect);
+            Threader::fireThread(currentIP, _connect);
         }
         break;
     }
@@ -640,7 +618,7 @@ int _GetDNSFromMask(char *mask, char *saveMask, char *saveMaskEnder) {
         sprintf(currentIP, "%s%s", mask, gTLD);
         verboseProgress(gTargets);
 
-        Threader::fireThread(currentIP, (void*(*)(void))_connect);
+        Threader::fireThread(currentIP, _connect);
     };
 }
 int _getChunkCount(char *data) {
@@ -820,7 +798,7 @@ void MainStarter::startImportScan(){
                 strcpy(currentIP, inet_ntoa(tAddr));
                 verboseProgress(gTargets);
 
-                Threader::fireThread(currentIP, (void*(*)(void))_connect);
+                Threader::fireThread(currentIP, _connect);
             }
         }
 haters_gonna_hate_IM:;
@@ -848,7 +826,7 @@ haters_gonna_hate_IM:;
                 tAddr.s_addr = ntohl(i);
                 strcpy(currentIP, inet_ntoa(tAddr));
                 verboseProgress(gTargets);
-                Threader::fireThread(currentIP, (void*(*)(void))_connect);
+                Threader::fireThread(currentIP, _connect);
             }
         }
         break;
