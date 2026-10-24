@@ -53,3 +53,9 @@ compile_commands.json
 *_qmlcache.qrc
 # Vendored Windows runtime DLLs (kept as release assets, not in git)
 src/3rdparty/*.dll
+
+# Headless run artifacts
+nesca-run-*
+results_*
+restore
+version

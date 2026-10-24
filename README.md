@@ -2,68 +2,126 @@
 
 Сканер сети. Легендарный. Твой.
 
-![Nesca](nesca.png)
+Этот репозиторий — форк [`S0Ulle33/nesca`](https://github.com/S0Ulle33/nesca),
+который, в свою очередь, является форком
+[`pantyusha/nesca`](https://github.com/pantyusha/nesca).
 
-## История возникновения
+> **Используй сканер только на своих системах и сетях, где у тебя есть явное
+> разрешение.** Автор форка не несёт ответственности за использование
+> инструмента против чужих систем.
 
-Был разработан нетсталкерской группой ISKOPASI как универсальный сканер для всего ~~сущего~~ Интернета, брута, отсева и собирания базы находочек. База находок ныне мертва, группа тоже.
+## Что добавлено в этом форке
 
-## Аудит безопасности
+- Headless CLI с JSONL-выводом (`--headless`), пригодный для скриптов и
+  воспроизводимых проверок.
+- Docker-сборка на Ubuntu 24.04 с Qt 5.15 и системными libssh/curl/openssl.
+- Исправления Linux-сборки: OpenSSL 3, импорт списков целей, обнаружение
+  SSH/FTP без брута, последний IP в диапазоне, гонка запуска воркеров.
+- Изолированный Docker-полигон для проверки HTTP Basic, SSH, FTP и RTSP.
+- Legacy Windows DLL вынесены из git; `HCNetSDK.dll` не распространяется.
 
-Пользователем [enemy-submarine](https://github.com/enemy-submarine) был проведет [частичный аудит](https://github.com/enemy-submarine/nesca_audit), который показывает пару уязвимостей (PoC в комплекте) и состояние кодовой базы проекта в целом.
+Подробности:
 
-## Бинарники
-
-- [Последние релизы](https://github.com/S0Ulle33/nesca/releases)
-- [Старый Билд Win32 (24D87-801)](https://mega.nz/#!yZV3UDpY!6D5k-Dd1amF0i_rzIhFM-WU7cdN3pxR2mwsYiIqedtU), пароль - 24D87-801
+- [`docs/CLI.md`](docs/CLI.md) — флаги, JSONL-схема, wordlists.
+- [`docs/TESTLAB.md`](docs/TESTLAB.md) — Docker-полигон.
+- [`docs/WINDOWS_DEPS.md`](docs/WINDOWS_DEPS.md) — DLL и Hikvision SDK.
+- [`NOTICE.md`](NOTICE.md) — границы лицензии.
 
 ## Сборка
 
+### Docker (рекомендуется)
+
+```bash
+docker build -t nesca:dev .
+docker run --rm -e DISPLAY="$DISPLAY" \
+  -v /tmp/.X11-unix:/tmp/.X11-unix \
+  nesca:dev
+```
+
+Для headless-режима GUI не нужен:
+
+```bash
+docker run --rm --network host nesca:dev \
+  ./nesca --headless --target 127.0.0.1 --ports 8080 --jsonl -
+```
+
+### Linux (нативно)
+
+Нужны Qt 5.15, libssh, OpenSSL и libcurl:
+
+```bash
+sudo apt-get install qtbase5-dev qtbase5-dev-tools qtmultimedia5-dev \
+  libqt5multimedia5-plugins libssh-dev libssl-dev libcurl4-openssl-dev \
+  build-essential
+
+git clone https://github.com/fedorov0av/nesca.git
+cd nesca/src
+qmake
+make -j"$(nproc)"
+```
+
+`qmake` запускается из `src/`, а не из корня репозитория.
+
 ### Windows
 
-1. Качаем последнюю версию [qt-opensource-windows-x86](http://download.qt.io/official_releases/qt/)
-2. Устанавливаем, оставляя галочки на:
+Основная историческая сборка — Qt 5.14/5.15 + MinGW 32-bit. Инструкция:
 
-   _MinGW 32-bit_  
-   _Sources_  
-   _QT Creator_
+1. Установи Qt с компонентами _MinGW 32-bit_, _Sources_ и _Qt Creator_.
+2. Добавь в `PATH` каталоги `Qt\5.15.x\mingw81_32\bin` и
+   `Qt\Tools\mingw810_32\bin` (версии могут отличаться).
+3. Открой `src/nesca.pro` в Qt Creator, выбери MinGW, конфигурацию Release и
+   собери проект.
+4. Скопируй `nesca.exe` в отдельную папку и выполни
+   `windeployqt.exe --compiler-runtime nesca.exe`.
+5. Скопируй рядом нужные DLL из `src/3rdparty` (см.
+   [`docs/WINDOWS_DEPS.md`](docs/WINDOWS_DEPS.md)) и папку `src/pwd_lists`.
 
-3. Добавляем в PATH следующие папки:
+VS2022-проект из `kazemYT/nesca` пока не портирован под `src/`-layout; это
+отдельный этап. Пока используй MinGW или Qt Creator.
 
-   `C:\Qt\Qt5.14.2\5.14.2\mingw73_32\bin`  
-   `C:\Qt\Qt5.14.2\Tools\mingw730_32\bin`
+## CLI
 
-4. `git clone https://github.com/S0Ulle33/nesca.git`
-5. Запускаем _QT Creator_ и открываем скачанный репозиторий, выбрав `nesca.pro`
-6. Выбираем _MinGW_ и нажимаем _Configure Project_
-7. В _QT Creator_, в левом нижнем углу, вместо _Debug_ выбираем _Release_
-8. Нажимаем кнопку _Build_ (молоточек)
-9. Когда сборка завершится, в папке с репозиторием будет новая папка `build-nesca-Desktop...`; переходим туда и копируем `nesca.exe` из папки `release` в удобное место
-10. Открываем _PowerShell_ или _CMD_ из этого места и выполняем:
-
-    `windeployqt.exe --compiler-runtime nesca.exe`
-
-11. Копируем в эту же папку _.dll_ файлы из `репозиторий/src/3rdparty`; и папку `репозиторий/src/pwd_lists`
-
-### Linux
-
-1. [Официальный дистрибутив Qt5](https://wiki.qt.io/Install_Qt_5_on_Ubuntu)
-2. Пакеты зависимостей:
-
-```
-sudo apt-get install qtmultimedia5-dev libqt5multimediawidgets5 libqt5multimedia5-plugins libqt5multimedia5 libssh-dev
+```bash
+./nesca --headless --target 192.0.2.0/28 --ports 22,80,443 --jsonl -
 ```
 
-3. Сборка:
+Брут включается только явно:
 
+```bash
+./nesca --headless --target 192.0.2.10 --ports 22 \
+  --brute --ssh-passlist ./wordlists/sshpass.txt --jsonl results.jsonl
 ```
-git clone https://github.com/S0Ulle33/nesca.git
-qmake
-make
+
+Без `--brute` credential-списки не загружаются, и сканер выполняет только
+обнаружение сервисов. Полная документация — в [`docs/CLI.md`](docs/CLI.md).
+
+## Тестовый полигон
+
+```bash
+cd testlab
+docker compose up -d --build
+cd ..
+./testlab/run-scan.sh
 ```
 
-### Docker
+Полигон использует `172.28.0.0/24` и dummy-креды `test:test`. Не направляй
+сканер на публичные или чужие диапазоны.
 
-1. `git clone --branch dev https://github.com/S0Ulle33/nesca.git`
-2. `cd nesca/ && docker build -t nesca .`
-3. `docker run -i -e DISPLAY=$DISPLAY -v /tmp/.X11-unix/:/tmp/.X11-unix nesca`
+## Лицензия
+
+Оригинальный код не содержит файла лицензии. `GPL-3.0-only` применяется
+только к новым файлам этого форка; upstream-файлы и правки в них не
+перелицензируются. Полный текст — в
+[`LICENSES/GPL-3.0-only.txt`](LICENSES/GPL-3.0-only.txt), границы — в
+[`NOTICE.md`](NOTICE.md).
+
+`HCNetSDK.dll` — проприетарная библиотека Hikvision; она не входит в
+репозиторий и релизы. Старые Windows DLL доступны только как release assets
+для совместимости.
+
+## Аудит безопасности
+
+Пользователь [enemy-submarine](https://github.com/enemy-submarine) провёл
+[частичный аудит](https://github.com/enemy-submarine/nesca_audit) upstream-кода.
+Результаты относятся к исходной кодовой базе и не являются аудитом этого
+форка.
