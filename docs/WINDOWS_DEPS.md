@@ -19,7 +19,8 @@ the vcpkg `applocal` deployment step.
 ## Legacy DLLs (release assets)
 
 The old DLLs from the 2020 dev branch are kept as release assets for
-compatibility only. They are old and should not be used for new deployments.
+compatibility only: [deps-2020.07](https://github.com/fedorov0av/nesca/releases/tag/deps-2020.07).
+They are old and should not be used for new deployments.
 
 | File | SHA-256 |
 |---|---|

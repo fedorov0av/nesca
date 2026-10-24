@@ -120,7 +120,8 @@ cd ..
 [`NOTICE.md`](NOTICE.md).
 
 `HCNetSDK.dll` — проприетарная библиотека Hikvision; она не входит в
-репозиторий и релизы. Старые Windows DLL доступны только как release assets
+репозиторий и релизы. Старые Windows DLL доступны только как
+[release assets](https://github.com/fedorov0av/nesca/releases/tag/deps-2020.07)
 для совместимости.
 
 ## Аудит безопасности
