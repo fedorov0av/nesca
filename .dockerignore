@@ -1,0 +1,7 @@
+.git
+.gitignore
+build
+build-*
+*.o
+*.user
+nesca-deps
