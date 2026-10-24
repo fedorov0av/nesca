@@ -33,9 +33,11 @@ The release asset does **not** include `HCNetSDK.dll`.
 
 ## Hikvision SDK
 
-`HCNetSDK.dll` is proprietary Hikvision software and is not redistributed by
-this fork. Obtain the Hikvision SDK from Hikvision, then place the x86
-`HCNetSDK.dll` next to `nesca.exe`. The application loads it at runtime:
+`HCNetSDK.dll` is proprietary Hikvision software and is not present in the
+current tree or the release assets. The upstream history still contains it;
+this fork does not add or redistribute it. Obtain the Hikvision SDK from
+Hikvision, then place the x86 `HCNetSDK.dll` next to `nesca.exe`. The
+application loads it at runtime:
 
 ```cpp
 LoadLibraryW(L".\\HCNetSDK.dll");

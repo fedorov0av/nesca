@@ -13,6 +13,7 @@ created in this fork**, including:
 - `src/ResultSink.h`, `src/ResultSink.cpp`
 - `src/HeadlessOptions.h`
 - `.dockerignore`
+- `BUILD_VS.md`, `nesca.sln`, `nesca.vcxproj`, `vcpkg.json`
 - `docs/**`
 - `testlab/**`
 - `LICENSES/**`
@@ -36,8 +37,9 @@ binaries or a combined GPL distribution.
 
 ## Third-party components
 
-- **HCNetSDK.dll** is proprietary Hikvision software. It is not redistributed
-  in this repository or in its release assets. Obtain it from Hikvision and
+- **HCNetSDK.dll** is proprietary Hikvision software. It is not present in the
+  current tree or in the release assets. The upstream history still contains
+  it; this fork does not add or redistribute it. Obtain it from Hikvision and
   comply with their license.
 - The legacy Windows DLLs (`libcurl.dll`, `libeay32.dll`, `ssh.dll`,
   `zlib1.dll`) are provided only as optional release assets for compatibility
